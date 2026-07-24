@@ -1,16 +1,26 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
-import { renderCommand } from "./template"
-import { MAX_WAIT_SECONDS, SEQUENCE_TOOL_NAME, WAIT_TOOL_NAME, type SequenceStep } from "./builtins"
-import type { ChatMessage, OllamaToolCall, ToolConfig } from "./types"
+import { renderCommand, validateToolConfig } from "./template"
+import {
+  CREATE_TOOL_NAME,
+  MAX_WAIT_SECONDS,
+  SEARCH_TOOL_NAME,
+  SEQUENCE_TOOL_NAME,
+  WAIT_TOOL_NAME,
+  type SequenceStep,
+} from "./builtins"
+import type { ChatMessage, OllamaToolCall, ToolConfig, ToolDefinition } from "./types"
 
 const MAX_STEPS = 6
 
 const SYSTEM_PROMPT =
-  "Eres un asistente que controla la computadora del usuario mediante tools. " +
+  "Eres un asistente que controla la computadora del usuario (Windows con NirCmd) mediante tools. " +
   "Cuando el usuario pida una acción que coincida con una tool disponible, llámala con los argumentos correctos. " +
-  "Si no existe una tool adecuada, explícalo en lugar de inventar comandos. " +
+  `Si NINGUNA tool actual cubre lo que pide, NO inventes comandos: primero usa "${SEARCH_TOOL_NAME}" ` +
+  `para buscar el comando de NirCmd adecuado, luego usa "${CREATE_TOOL_NAME}" para crear la tool y, ` +
+  "en el siguiente paso, llámala con los argumentos correctos. " +
+  `Para varias acciones en orden usa "${SEQUENCE_TOOL_NAME}". ` +
   "Responde siempre en español y de forma breve."
 
 type ConfirmRequest = {
@@ -32,7 +42,11 @@ function splitThinking(content: string): { content: string; thinking?: string } 
   return { content: visible, thinking: thinking || undefined }
 }
 
-export function useAgent(config: ToolConfig | null, model: string) {
+export function useAgent(
+  config: ToolConfig | null,
+  model: string,
+  onConfigChange?: (config: ToolConfig) => void,
+) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -43,6 +57,8 @@ export function useAgent(config: ToolConfig | null, model: string) {
   configRef.current = config
   const modelRef = useRef(model)
   modelRef.current = model
+  const onConfigChangeRef = useRef(onConfigChange)
+  onConfigChangeRef.current = onConfigChange
 
   const requestConfirm = useCallback((toolName: string, command: string) => {
     return new Promise<boolean>((resolve) => {
@@ -156,9 +172,144 @@ export function useAgent(config: ToolConfig | null, model: string) {
     [requestConfirm],
   )
 
+  /** Search the NirCmd reference so the model can discover an unknown command. */
+  const runSearch = useCallback(async (rawQuery: unknown): Promise<ChatMessage> => {
+    const query = String(rawQuery ?? "").trim()
+    if (!query) {
+      return {
+        id: uid(),
+        role: "tool",
+        tool_name: SEARCH_TOOL_NAME,
+        content: "Indica qué acción quieres buscar en la referencia de NirCmd.",
+      }
+    }
+    try {
+      const res = await fetch(`/api/nircmd?q=${encodeURIComponent(query)}`)
+      const data = await res.json()
+      const matches = Array.isArray(data.matches) ? data.matches : []
+      if (matches.length === 0) {
+        return {
+          id: uid(),
+          role: "tool",
+          tool_name: SEARCH_TOOL_NAME,
+          content: `No se encontraron comandos de NirCmd para "${query}".`,
+        }
+      }
+      const lines = matches
+        .map(
+          (m: { command: string; syntax: string; description: string; safe: boolean }) =>
+            `• ${m.command} — ${m.description}\n  sintaxis: ${m.syntax}\n  safe sugerido: ${m.safe}`,
+        )
+        .join("\n")
+      return {
+        id: uid(),
+        role: "tool",
+        tool_name: SEARCH_TOOL_NAME,
+        content:
+          `Comandos de NirCmd encontrados para "${query}":\n${lines}\n\n` +
+          `Crea la tool con "${CREATE_TOOL_NAME}" (en 'command' pon solo los argumentos, con marcadores {param}).`,
+      }
+    } catch (err) {
+      return {
+        id: uid(),
+        role: "tool",
+        tool_name: SEARCH_TOOL_NAME,
+        content: `No se pudo consultar la referencia de NirCmd: ${err instanceof Error ? err.message : String(err)}`,
+      }
+    }
+  }, [])
+
+  /** Create a new tool from a NirCmd command, persist it, and make it usable now. */
+  const runCreateTool = useCallback(async (args: Record<string, unknown>): Promise<ChatMessage> => {
+    const cfg = configRef.current
+    if (!cfg) {
+      return { id: uid(), role: "tool", tool_name: CREATE_TOOL_NAME, content: "No hay configuración cargada." }
+    }
+
+    const name = String(args.name ?? "").trim()
+    const description = String(args.description ?? "").trim()
+    let command = String(args.command ?? "").trim()
+    const safe = args.safe === true || args.safe === "true"
+    const parameters =
+      args.parameters && typeof args.parameters === "object"
+        ? (args.parameters as ToolDefinition["parameters"])
+        : { type: "object" as const, properties: {} }
+
+    if (!name || !command) {
+      return {
+        id: uid(),
+        role: "tool",
+        tool_name: CREATE_TOOL_NAME,
+        content: "Faltan datos: se necesitan al menos 'name' y 'command'.",
+      }
+    }
+
+    // Normalize the command so it always runs through the {nircmd} executable.
+    command = command.replace(/^"?nircmd(?:c)?(?:\.exe)?"?\s+/i, "").trim()
+    if (!command.includes("{nircmd}")) command = `{nircmd} ${command}`
+
+    const newTool: ToolDefinition = {
+      name,
+      description: description || `Comando NirCmd: ${name}`,
+      safe,
+      parameters: parameters.type === "object" ? parameters : { type: "object", properties: {} },
+      command,
+    }
+
+    // Replace an existing tool with the same name, otherwise append.
+    const tools = cfg.tools.some((t) => t.name === name)
+      ? cfg.tools.map((t) => (t.name === name ? newTool : t))
+      : [...cfg.tools, newTool]
+    const nextConfig: ToolConfig = { ...cfg, tools }
+
+    const validationError = validateToolConfig(nextConfig)
+    if (validationError) {
+      return {
+        id: uid(),
+        role: "tool",
+        tool_name: CREATE_TOOL_NAME,
+        content: `La tool no es válida: ${validationError}. Corrige los datos y vuelve a intentarlo.`,
+      }
+    }
+
+    // Update the live ref immediately so the very next step can call the tool.
+    configRef.current = nextConfig
+    onConfigChangeRef.current?.(nextConfig)
+
+    // Persist to tools.json (best-effort; works when running locally).
+    let persisted = true
+    let persistError = ""
+    try {
+      const res = await fetch("/api/tools", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nextConfig),
+      })
+      if (!res.ok) {
+        persisted = false
+        const data = await res.json().catch(() => ({}))
+        persistError = data.error || `HTTP ${res.status}`
+      }
+    } catch (err) {
+      persisted = false
+      persistError = err instanceof Error ? err.message : String(err)
+    }
+
+    return {
+      id: uid(),
+      role: "tool",
+      tool_name: CREATE_TOOL_NAME,
+      toolCreated: newTool,
+      command: newTool.command,
+      content:
+        `Tool "${name}" creada y lista para usar.` +
+        (persisted ? " Guardada en tools.json." : ` (No se pudo guardar en tools.json: ${persistError})`),
+    }
+  }, [])
+
   /**
    * Resolve a single tool_call from the model into one or more chat messages.
-   * Handles the built-in chaining tools (wait_seconds / run_sequence) as well
+   * Handles the built-in tools (wait / sequence / search / create) as well
    * as ordinary user tools.
    */
   const runToolCall = useCallback(
@@ -171,6 +322,16 @@ export function useAgent(config: ToolConfig | null, model: string) {
 
       if (name === WAIT_TOOL_NAME) {
         onMessage(await runWait(args.seconds))
+        return
+      }
+
+      if (name === SEARCH_TOOL_NAME) {
+        onMessage(await runSearch(args.query))
+        return
+      }
+
+      if (name === CREATE_TOOL_NAME) {
+        onMessage(await runCreateTool(args))
         return
       }
 
@@ -201,7 +362,7 @@ export function useAgent(config: ToolConfig | null, model: string) {
 
       onMessage(await runSingleTool(name, args))
     },
-    [runWait, runSingleTool],
+    [runWait, runSingleTool, runSearch, runCreateTool],
   )
 
   const send = useCallback(

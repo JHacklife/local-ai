@@ -10,9 +10,16 @@
 
 export const WAIT_TOOL_NAME = "wait_seconds"
 export const SEQUENCE_TOOL_NAME = "run_sequence"
+export const SEARCH_TOOL_NAME = "buscar_comando_nircmd"
+export const CREATE_TOOL_NAME = "crear_tool_nircmd"
 
 /** Names that are handled internally and never map to a user tool/command. */
-export const BUILTIN_TOOL_NAMES = new Set([WAIT_TOOL_NAME, SEQUENCE_TOOL_NAME])
+export const BUILTIN_TOOL_NAMES = new Set([
+  WAIT_TOOL_NAME,
+  SEQUENCE_TOOL_NAME,
+  SEARCH_TOOL_NAME,
+  CREATE_TOOL_NAME,
+])
 
 /** Safety cap so the model can't freeze the session with an enormous delay. */
 export const MAX_WAIT_SECONDS = 120
@@ -90,6 +97,73 @@ export function buildBuiltinOllamaTools(userToolNames: string[]): OllamaFunction
             },
           },
           required: ["steps"],
+        },
+      },
+    },
+    {
+      type: "function",
+      function: {
+        name: SEARCH_TOOL_NAME,
+        description:
+          "Busca en la referencia de NirCmd (nirsoft.net) un comando capaz de realizar una acción " +
+          "para la que NO existe todavía una tool. Úsala como PRIMER paso cuando el usuario pida algo " +
+          `que ninguna tool actual cubre (tools actuales: ${available}). Devuelve comandos candidatos ` +
+          `con su sintaxis para que luego crees la tool con "${CREATE_TOOL_NAME}".`,
+        parameters: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description:
+                "Descripción breve de la acción deseada, p. ej. 'ajustar el brillo de la pantalla' " +
+                "o 'reproducir un archivo de audio'.",
+            },
+          },
+          required: ["query"],
+        },
+      },
+    },
+    {
+      type: "function",
+      function: {
+        name: CREATE_TOOL_NAME,
+        description:
+          "Crea una nueva tool basada en un comando de NirCmd y la guarda en la configuración para poder " +
+          `usarla de inmediato. Llama antes a "${SEARCH_TOOL_NAME}" para conocer la sintaxis exacta. ` +
+          'En "command" escribe SOLO los argumentos de nircmd (sin la ruta al ejecutable); usa ' +
+          "marcadores {nombre} para los parámetros que aporte el usuario, por ejemplo: " +
+          'speak text "{texto}". Después de crearla, llámala en el siguiente paso.',
+        parameters: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              description: "Nombre único de la tool en snake_case, p. ej. 'ajustar_brillo'.",
+            },
+            description: {
+              type: "string",
+              description: "Descripción en español de lo que hace la tool.",
+            },
+            command: {
+              type: "string",
+              description:
+                'Argumentos de nircmd con marcadores {param}, p. ej. setbrightness {nivel}. ' +
+                "No incluyas la ruta al ejecutable; se antepone automáticamente.",
+            },
+            safe: {
+              type: "boolean",
+              description:
+                "true si el comando es inofensivo y puede ejecutarse sin confirmación; " +
+                "false si es potencialmente destructivo (cerrar procesos, apagar, borrar, etc.).",
+            },
+            parameters: {
+              type: "object",
+              description:
+                "Esquema JSON de los parámetros (formato JSON Schema con type 'object', 'properties' y " +
+                "'required'). Debe incluir cada marcador {param} usado en command. Usa {} si no hay parámetros.",
+            },
+          },
+          required: ["name", "description", "command", "safe", "parameters"],
         },
       },
     },

@@ -1,7 +1,20 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Check, Clock, FileJson, LinkIcon, ListChecks, Loader2, Save, ShieldCheck, Wrench, Zap } from "lucide-react"
+import {
+  Check,
+  Clock,
+  FileJson,
+  LinkIcon,
+  ListChecks,
+  Loader2,
+  Save,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Wrench,
+  Zap,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
@@ -107,10 +120,11 @@ export function ToolsPanel({ config, onApply }: ToolsPanelProps) {
           <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5">
             <div className="flex items-center gap-2">
               <LinkIcon className="size-4 text-primary" />
-              <span className="text-xs font-medium text-foreground">Encadenamiento integrado</span>
+              <span className="text-xs font-medium text-foreground">Capacidades integradas</span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              El modelo puede ejecutar varias tools en orden y esperar entre pasos, sin configuración extra.
+              El modelo puede encadenar varias tools, esperar entre pasos y, si falta una capacidad, buscar el
+              comando en NirCmd y crear la tool automáticamente.
             </p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <span className="inline-flex items-center gap-1 rounded border border-border bg-background/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
@@ -120,6 +134,14 @@ export function ToolsPanel({ config, onApply }: ToolsPanelProps) {
               <span className="inline-flex items-center gap-1 rounded border border-border bg-background/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                 <Clock className="size-3" />
                 wait_seconds
+              </span>
+              <span className="inline-flex items-center gap-1 rounded border border-border bg-background/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                <Search className="size-3" />
+                buscar_comando_nircmd
+              </span>
+              <span className="inline-flex items-center gap-1 rounded border border-border bg-background/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                <Sparkles className="size-3" />
+                crear_tool_nircmd
               </span>
             </div>
           </div>

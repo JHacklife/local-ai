@@ -43,7 +43,7 @@ export function Console() {
     })
   }, [models])
 
-  const agent = useAgent(config, model)
+  const agent = useAgent(config, model, setConfig)
 
   return (
     <div className="flex h-dvh flex-col bg-background">
