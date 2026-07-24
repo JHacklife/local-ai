@@ -1,0 +1,128 @@
+{
+  "variables": {
+    "nircmd": "nircmd.exe"
+  },
+  "tools": [
+    {
+      "name": "set_system_volume",
+      "description": "Ajusta el volumen general del sistema a un porcentaje de 0 a 100.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "percent": {
+            "type": "integer",
+            "description": "Nivel de volumen deseado, de 0 (silencio) a 100 (máximo)."
+          }
+        },
+        "required": ["percent"]
+      },
+      "command": "{nircmd} setsysvolume {percent:volume}"
+    },
+    {
+      "name": "mute_system",
+      "description": "Silencia o activa el audio del sistema.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "description": "Usa 'on' para silenciar y 'off' para quitar el silencio.",
+            "enum": ["on", "off"]
+          }
+        },
+        "required": ["state"]
+      },
+      "command": "{nircmd} mutesysvolume {state:bool}"
+    },
+    {
+      "name": "monitor_power",
+      "description": "Apaga o enciende el monitor.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "description": "Usa 'off' para apagar el monitor y 'on' para encenderlo.",
+            "enum": ["on", "off"]
+          }
+        },
+        "required": ["state"]
+      },
+      "command": "{nircmd} monitor {state}"
+    },
+    {
+      "name": "take_screenshot",
+      "description": "Captura la pantalla completa y la guarda en un archivo PNG.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Ruta absoluta del archivo PNG donde guardar la captura.",
+            "default": "C:\\Users\\Public\\screenshot.png"
+          }
+        },
+        "required": ["path"]
+      },
+      "command": "{nircmd} savescreenshotfull \"{path}\""
+    },
+    {
+      "name": "open_program",
+      "description": "Abre un programa o archivo por su ruta o nombre de ejecutable.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Ruta del ejecutable o nombre, por ejemplo 'notepad' o 'C:\\\\Windows\\\\System32\\\\calc.exe'."
+          }
+        },
+        "required": ["target"]
+      },
+      "command": "{nircmd} exec show \"{target}\""
+    },
+    {
+      "name": "lock_workstation",
+      "description": "Bloquea la sesión de Windows.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "command": "{nircmd} lockws"
+    },
+    {
+      "name": "empty_recycle_bin",
+      "description": "Vacía la papelera de reciclaje.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "command": "{nircmd} emptybin"
+    },
+    {
+      "name": "set_clipboard_text",
+      "description": "Copia un texto al portapapeles de Windows.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Texto a colocar en el portapapeles."
+          }
+        },
+        "required": ["text"]
+      },
+      "command": "{nircmd} clipboard set \"{text}\""
+    }
+  ]
+}
