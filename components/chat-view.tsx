@@ -74,6 +74,9 @@ export function ChatView({
             <p className="mt-1 max-w-xs text-xs text-muted-foreground/70">
               {'Ej.: "sube el volumen al 40%", "toma una captura de pantalla", "bloquea la sesión".'}
             </p>
+            <p className="mt-2 max-w-sm text-xs text-muted-foreground/70">
+              {'También puede encadenar pasos: "abre la calculadora, copia \'hola\' al portapapeles, espera 3 segundos y toma una captura".'}
+            </p>
           </div>
         )}
 

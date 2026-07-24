@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Brain, ChevronDown, CircleCheck, CircleX, TerminalSquare, User, Wrench } from "lucide-react"
+import { Brain, ChevronDown, CircleCheck, CircleX, Clock, TerminalSquare, User, Wrench } from "lucide-react"
+import { WAIT_TOOL_NAME } from "@/lib/builtins"
 import type { ChatMessage } from "@/lib/types"
 
 function ThinkingBlock({ text }: { text: string }) {
@@ -35,6 +36,17 @@ export function MessageItem({ message }: { message: ChatMessage }) {
           <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
             <User className="size-4" />
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (message.role === "tool" && message.tool_name === WAIT_TOOL_NAME) {
+    return (
+      <div className="flex justify-start">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs text-muted-foreground">
+          <Clock className="size-3.5" />
+          {message.content}
         </div>
       </div>
     )

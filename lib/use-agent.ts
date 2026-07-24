@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react"
 import { renderCommand } from "./template"
+import { MAX_WAIT_SECONDS, SEQUENCE_TOOL_NAME, WAIT_TOOL_NAME, type SequenceStep } from "./builtins"
 import type { ChatMessage, OllamaToolCall, ToolConfig } from "./types"
 
 const MAX_STEPS = 6
@@ -78,20 +79,35 @@ export function useAgent(config: ToolConfig | null, model: string) {
     return data.message as ChatMessage
   }, [])
 
-  const runToolCall = useCallback(
-    async (call: OllamaToolCall): Promise<ChatMessage> => {
+  /** Client-side delay used by the wait_seconds built-in and sequence waits. */
+  const runWait = useCallback((rawSeconds: unknown): Promise<ChatMessage> => {
+    const seconds = Math.max(0, Math.min(MAX_WAIT_SECONDS, Number(rawSeconds) || 0))
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          id: uid(),
+          role: "tool",
+          tool_name: WAIT_TOOL_NAME,
+          content: `Esperé ${seconds} segundo${seconds === 1 ? "" : "s"}.`,
+        })
+      }, seconds * 1000)
+    })
+  }, [])
+
+  /** Render + confirm + execute a single user-defined tool. */
+  const runSingleTool = useCallback(
+    async (toolName: string, args: Record<string, unknown>): Promise<ChatMessage> => {
       const cfg = configRef.current
-      const tool = cfg?.tools.find((t) => t.name === call.function.name)
+      const tool = cfg?.tools.find((t) => t.name === toolName)
       if (!cfg || !tool) {
         return {
           id: uid(),
           role: "tool",
-          tool_name: call.function.name,
-          content: `Error: la tool '${call.function.name}' no está definida.`,
+          tool_name: toolName,
+          content: `Error: la tool '${toolName}' no está definida.`,
         }
       }
 
-      const args = (call.function.arguments || {}) as Record<string, unknown>
       const command = renderCommand(tool.command, args, cfg.variables)
 
       // Mixed mode: safe tools auto-run, others require confirmation.
@@ -140,6 +156,54 @@ export function useAgent(config: ToolConfig | null, model: string) {
     [requestConfirm],
   )
 
+  /**
+   * Resolve a single tool_call from the model into one or more chat messages.
+   * Handles the built-in chaining tools (wait_seconds / run_sequence) as well
+   * as ordinary user tools.
+   */
+  const runToolCall = useCallback(
+    async (
+      call: OllamaToolCall,
+      onMessage: (msg: ChatMessage) => void,
+    ): Promise<void> => {
+      const name = call.function.name
+      const args = (call.function.arguments || {}) as Record<string, unknown>
+
+      if (name === WAIT_TOOL_NAME) {
+        onMessage(await runWait(args.seconds))
+        return
+      }
+
+      if (name === SEQUENCE_TOOL_NAME) {
+        const steps = Array.isArray(args.steps) ? (args.steps as SequenceStep[]) : []
+        if (steps.length === 0) {
+          onMessage({
+            id: uid(),
+            role: "tool",
+            tool_name: SEQUENCE_TOOL_NAME,
+            content: "La secuencia no incluía ningún paso.",
+          })
+          return
+        }
+        for (const step of steps) {
+          const stepArgs = (step.arguments || {}) as Record<string, unknown>
+          if (step.tool === WAIT_TOOL_NAME) {
+            onMessage(await runWait(stepArgs.seconds))
+            continue
+          }
+          const msg = await runSingleTool(step.tool, stepArgs)
+          onMessage(msg)
+          // Stop the whole sequence if the user rejects one of its commands.
+          if (msg.denied) break
+        }
+        return
+      }
+
+      onMessage(await runSingleTool(name, args))
+    },
+    [runWait, runSingleTool],
+  )
+
   const send = useCallback(
     async (text: string) => {
       if (!text.trim() || busy) return
@@ -166,9 +230,10 @@ export function useAgent(config: ToolConfig | null, model: string) {
           if (!raw.tool_calls || raw.tool_calls.length === 0) break
 
           for (const call of raw.tool_calls) {
-            const toolMsg = await runToolCall(call)
-            history = [...history, toolMsg]
-            setMessages(history)
+            await runToolCall(call, (toolMsg) => {
+              history = [...history, toolMsg]
+              setMessages(history)
+            })
           }
         }
       } catch (err) {
