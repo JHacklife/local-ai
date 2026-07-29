@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { OLLAMA_HOST } from "@/lib/ollama"
+import { buildBuiltinOllamaTools } from "@/lib/builtins"
 import { toOllamaTool } from "@/lib/template"
 import type { ChatMessage, ToolDefinition } from "@/lib/types"
 
@@ -36,11 +37,16 @@ export async function POST(req: Request) {
     ...(tool_name ? { tool_name } : {}),
   }))
 
+  // Expose the user's tools plus the built-in chaining tools (wait/sequence)
+  // so the model can run several actions in order from a single request.
+  const userTools = tools && tools.length > 0 ? tools.map(toOllamaTool) : []
+  const allTools = userTools.length > 0 ? [...userTools, ...buildBuiltinOllamaTools(tools.map((t) => t.name))] : []
+
   const payload = {
     model,
     messages: cleanMessages,
     stream: false as const,
-    ...(tools && tools.length > 0 ? { tools: tools.map(toOllamaTool) } : {}),
+    ...(allTools.length > 0 ? { tools: allTools } : {}),
   }
 
   try {

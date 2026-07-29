@@ -8,7 +8,7 @@ import { ToolsPanel } from "@/components/tools-panel"
 import { useAgent } from "@/lib/use-agent"
 import type { ToolConfig } from "@/lib/types"
 
-const PREFERRED = ["qwen3:8b", "gemma4:12b", "gemma3:12b"]
+const PREFERRED = ["kaith_fast:latest","qwen3:8b", "gemma4:12b", "gemma3:12b"]
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -43,7 +43,7 @@ export function Console() {
     })
   }, [models])
 
-  const agent = useAgent(config, model)
+  const agent = useAgent(config, model, setConfig)
 
   return (
     <div className="flex h-dvh flex-col bg-background">

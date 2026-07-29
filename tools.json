@@ -15,7 +15,9 @@
             "description": "Nivel de volumen deseado, de 0 (silencio) a 100 (máximo)."
           }
         },
-        "required": ["percent"]
+        "required": [
+          "percent"
+        ]
       },
       "command": "{nircmd} setsysvolume {percent:volume}"
     },
@@ -29,10 +31,15 @@
           "state": {
             "type": "string",
             "description": "Usa 'on' para silenciar y 'off' para quitar el silencio.",
-            "enum": ["on", "off"]
+            "enum": [
+              "on",
+              "off"
+            ]
           }
         },
-        "required": ["state"]
+        "required": [
+          "state"
+        ]
       },
       "command": "{nircmd} mutesysvolume {state:bool}"
     },
@@ -46,10 +53,15 @@
           "state": {
             "type": "string",
             "description": "Usa 'off' para apagar el monitor y 'on' para encenderlo.",
-            "enum": ["on", "off"]
+            "enum": [
+              "on",
+              "off"
+            ]
           }
         },
-        "required": ["state"]
+        "required": [
+          "state"
+        ]
       },
       "command": "{nircmd} monitor {state}"
     },
@@ -66,14 +78,16 @@
             "default": "C:\\Users\\Public\\screenshot.png"
           }
         },
-        "required": ["path"]
+        "required": [
+          "path"
+        ]
       },
       "command": "{nircmd} savescreenshotfull \"{path}\""
     },
     {
       "name": "open_program",
       "description": "Abre un programa o archivo por su ruta o nombre de ejecutable.",
-      "safe": false,
+      "safe": true,
       "parameters": {
         "type": "object",
         "properties": {
@@ -82,14 +96,16 @@
             "description": "Ruta del ejecutable o nombre, por ejemplo 'notepad' o 'C:\\\\Windows\\\\System32\\\\calc.exe'."
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "command": "{nircmd} exec show \"{target}\""
     },
     {
       "name": "lock_workstation",
       "description": "Bloquea la sesión de Windows.",
-      "safe": false,
+      "safe": true,
       "parameters": {
         "type": "object",
         "properties": {},
@@ -100,7 +116,7 @@
     {
       "name": "empty_recycle_bin",
       "description": "Vacía la papelera de reciclaje.",
-      "safe": false,
+      "safe": true,
       "parameters": {
         "type": "object",
         "properties": {},
@@ -120,9 +136,1070 @@
             "description": "Texto a colocar en el portapapeles."
           }
         },
-        "required": ["text"]
+        "required": [
+          "text"
+        ]
       },
       "command": "{nircmd} clipboard set \"{text}\""
+    },
+    {
+      "name": "move_mouse_to",
+      "description": "Mueve el cursor del mouse a una posición absoluta de la pantalla, en píxeles.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "integer",
+            "description": "Coordenada X (horizontal) de destino, en píxeles desde el borde izquierdo."
+          },
+          "y": {
+            "type": "integer",
+            "description": "Coordenada Y (vertical) de destino, en píxeles desde el borde superior."
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ]
+      },
+      "command": "{nircmd} setcursor {x} {y}"
+    },
+    {
+      "name": "click_mouse",
+      "description": "Simula un clic del mouse (izquierdo, derecho o del medio) en la posición actual del cursor.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "button": {
+            "type": "string",
+            "description": "Botón del mouse a simular.",
+            "enum": [
+              "left",
+              "right",
+              "middle"
+            ]
+          }
+        },
+        "required": [
+          "button"
+        ]
+      },
+      "command": "{nircmd} sendmouse {button} click"
+    },
+    {
+      "name": "speak_text",
+      "description": "Hace que Windows lea un texto en voz alta usando el motor de texto a voz (TTS).",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Texto que se va a pronunciar."
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "command": "{nircmd} speak text \"{text}\""
+    },
+    {
+      "name": "show_message",
+      "description": "Muestra un cuadro de diálogo con un mensaje y un título.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Texto del mensaje a mostrar."
+          },
+          "title": {
+            "type": "string",
+            "description": "Título de la ventana del mensaje.",
+            "default": "Aviso"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "command": "{nircmd} infobox \"{message}\" \"{title}\""
+    },
+    {
+      "name": "control_window",
+      "description": "Activa, minimiza, maximiza, cierra o normaliza una ventana buscándola por parte de su título.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Acción a aplicar sobre la ventana.",
+            "enum": [
+              "activate",
+              "min",
+              "max",
+              "normal",
+              "close",
+              "hide",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Texto (parcial) del título de la ventana a buscar, por ejemplo 'Notepad' o 'Chrome'."
+          }
+        },
+        "required": [
+          "action",
+          "title"
+        ]
+      },
+      "command": "{nircmd} win {action} ititle \"{title}\""
+    },
+    {
+      "name": "system_power_action",
+      "description": "Apaga, reinicia o cierra la sesión de Windows.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Acción de energía a ejecutar sobre el sistema.",
+            "enum": [
+              "poweroff",
+              "reboot",
+              "logoff"
+            ]
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "command": "{nircmd} exitwin {action}"
+    },
+    {
+      "name": "start_screensaver",
+      "description": "Activa el protector de pantalla inmediatamente.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "command": "{nircmd} screensaver"
+    },
+    {
+      "name": "media_control",
+      "description": "Controla la reproducción multimedia actual: reproducir/pausar, siguiente o anterior pista.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Acción de reproducción a ejecutar.",
+            "enum": [
+              "play_pause",
+              "next_track",
+              "prev_track",
+              "stop"
+            ]
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "command": "{nircmd} sendkeypress media_{action}"
+    },
+    {
+      "name": "set_default_audio_device",
+      "description": "Cambia el dispositivo de salida de audio predeterminado del sistema.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "device_name": {
+            "type": "string",
+            "description": "Nombre (o parte del nombre) del dispositivo de audio a establecer como predeterminado."
+          }
+        },
+        "required": [
+          "device_name"
+        ]
+      },
+      "command": "{nircmd} setdefaultsounddevice \"{device_name}\""
+    },
+    {
+      "name": "refresh_desktop",
+      "description": "Refresca el escritorio y el explorador de Windows (íconos, barra de tareas).",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "command": "{nircmd} sysrefresh"
+    },
+    {
+      "name": "move_mouse_relative",
+      "description": "Mueve el cursor del mouse una cantidad relativa de píxeles desde su posición actual.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "dx": {
+            "type": "integer",
+            "description": "Desplazamiento horizontal en píxeles (negativo = izquierda)."
+          },
+          "dy": {
+            "type": "integer",
+            "description": "Desplazamiento vertical en píxeles (negativo = arriba)."
+          }
+        },
+        "required": [
+          "dx",
+          "dy"
+        ]
+      },
+      "command": "{nircmd} movecursor {dx} {dy}"
+    },
+    {
+      "name": "control_cdrom_tray",
+      "description": "Abre o cierra la bandeja de la unidad de CD/DVD.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Acción sobre la bandeja.",
+            "enum": [
+              "open",
+              "close",
+              "closeslow"
+            ]
+          },
+          "drive": {
+            "type": "string",
+            "description": "Letra de unidad opcional, por ejemplo 'd:'. Si se omite, usa la unidad por defecto."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "command": "{nircmd} cdrom {action} {drive}"
+    },
+    {
+      "name": "kill_process",
+      "description": "Termina un proceso en ejecución por el nombre de su ejecutable.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "process_name": {
+            "type": "string",
+            "description": "Nombre del ejecutable a terminar, por ejemplo 'notepad.exe'."
+          }
+        },
+        "required": [
+          "process_name"
+        ]
+      },
+      "command": "{nircmd} killprocess process \"{process_name}\""
+    },
+    {
+      "name": "adjust_system_volume",
+      "description": "Cambia el volumen del sistema en forma relativa (sumando o restando).",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "delta": {
+            "type": "integer",
+            "description": "Cantidad a sumar (positivo) o restar (negativo) al volumen actual, en la escala interna de NirCmd (-65535 a 65535)."
+          }
+        },
+        "required": [
+          "delta"
+        ]
+      },
+      "command": "{nircmd} changesysvolume {delta}"
+    },
+    {
+      "name": "adjust_volume_step",
+      "description": "Sube o baja el volumen un paso, como si se presionara la tecla multimedia correspondiente.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "description": "Dirección del ajuste de volumen.",
+            "enum": [
+              "up",
+              "down"
+            ]
+          }
+        },
+        "required": [
+          "direction"
+        ]
+      },
+      "command": "{nircmd} sendkeypress volume_{direction}"
+    },
+    {
+      "name": "sleep_system",
+      "description": "Pone la computadora en modo de espera (standby/suspender).",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "command": "{nircmd} standby"
+    },
+    {
+      "name": "set_wallpaper",
+      "description": "Cambia el fondo de escritorio a una imagen dada, con un estilo de ajuste.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Ruta absoluta del archivo de imagen a usar como fondo."
+          },
+          "style": {
+            "type": "integer",
+            "description": "Estilo de ajuste de NirCmd: 0=centrado, 1=mosaico, 2=ajustar a pantalla (stretch). Verificar valores exactos según versión de NirCmd.",
+            "default": 2
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} setwallpaper \"{path}\" {style}"
+    },
+    {
+      "name": "show_tray_balloon",
+      "description": "Muestra una notificación tipo globo en la bandeja del sistema (system tray).",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Título de la notificación."
+          },
+          "text": {
+            "type": "string",
+            "description": "Texto del cuerpo de la notificación."
+          }
+        },
+        "required": [
+          "title",
+          "text"
+        ]
+      },
+      "command": "{nircmd} trayballoon \"{title}\" \"{text}\""
+    },
+    {
+      "name": "set_file_attribute",
+      "description": "Agrega o quita un atributo (oculto, solo lectura, sistema, archivo) a un archivo.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Ruta absoluta del archivo a modificar."
+          },
+          "attribute": {
+            "type": "string",
+            "description": "Atributo a modificar: '+h'/'-h' oculto, '+r'/'-r' solo lectura, '+s'/'-s' sistema, '+a'/'-a' archivo."
+          }
+        },
+        "required": [
+          "path",
+          "attribute"
+        ]
+      },
+      "command": "{nircmd} setfileattr \"{path}\" {attribute}"
+    },
+    {
+      "name": "set_process_priority",
+      "description": "Cambia la prioridad de un proceso en ejecución.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "process_name": {
+            "type": "string",
+            "description": "Nombre del ejecutable cuyo proceso se quiere ajustar."
+          },
+          "priority": {
+            "type": "string",
+            "description": "Nivel de prioridad a asignar.",
+            "enum": [
+              "idle",
+              "belownormal",
+              "normal",
+              "abovenormal",
+              "high",
+              "realtime"
+            ]
+          }
+        },
+        "required": [
+          "process_name",
+          "priority"
+        ]
+      },
+      "command": "{nircmd} setpriorityclass {process_name} {priority}"
+    },
+    {
+      "name": "shell_execute",
+      "description": "Ejecuta una acción de shell de Windows (abrir, imprimir, explorar) sobre un archivo.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "verb": {
+            "type": "string",
+            "description": "Verbo de shell a ejecutar.",
+            "enum": [
+              "open",
+              "print",
+              "explore"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "description": "Ruta del archivo sobre el que se ejecuta la acción."
+          }
+        },
+        "required": [
+          "verb",
+          "target"
+        ]
+      },
+      "command": "{nircmd} shexec {verb} \"{target}\""
+    },
+    {
+      "name": "control_service",
+      "description": "Inicia, detiene, pausa o reanuda un servicio de Windows.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Acción a aplicar sobre el servicio.",
+            "enum": [
+              "start",
+              "stop",
+              "pause",
+              "continue"
+            ]
+          },
+          "service_name": {
+            "type": "string",
+            "description": "Nombre interno del servicio de Windows (no el nombre para mostrar)."
+          }
+        },
+        "required": [
+          "action",
+          "service_name"
+        ]
+      },
+      "command": "{nircmd} service {action} \"{service_name}\""
+    },
+    {
+      "name": "set_screensaver_timeout",
+      "description": "Configura el tiempo de inactividad (en segundos) antes de que se active el protector de pantalla.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "seconds": {
+            "type": "integer",
+            "description": "Segundos de inactividad antes de activar el protector de pantalla. 0 lo desactiva."
+          }
+        },
+        "required": [
+          "seconds"
+        ]
+      },
+      "command": "{nircmd} screensavertimeout {seconds}"
+    },
+    {
+      "name": "set_screen_resolution",
+      "description": "Cambia la resolución de pantalla y, opcionalmente, la profundidad de color.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "integer",
+            "description": "Ancho en píxeles."
+          },
+          "height": {
+            "type": "integer",
+            "description": "Alto en píxeles."
+          },
+          "bpp": {
+            "type": "integer",
+            "description": "Profundidad de color en bits (por ejemplo 32). Opcional.",
+            "default": 32
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ]
+      },
+      "command": "{nircmd} setdisplay {width} {height} {bpp}"
+    },
+    {
+      "name": "run_elevated",
+      "description": "Ejecuta un programa o comando con permisos elevados (como administrador).",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Ruta del ejecutable o comando a correr con permisos elevados."
+          }
+        },
+        "required": [
+          "target"
+        ]
+      },
+      "command": "{nircmd} elevate \"{target}\""
+    },
+    {
+      "name": "wait_ms",
+      "description": "Espera una cantidad de milisegundos. Pensado para usarse encadenado con otros comandos.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "milliseconds": {
+            "type": "integer",
+            "description": "Cantidad de milisegundos a esperar."
+          }
+        },
+        "required": [
+          "milliseconds"
+        ]
+      },
+      "command": "{nircmd} cmdwait {milliseconds}"
+    },
+    {
+      "name": "stop_speaking",
+      "description": "Detiene inmediatamente cualquier lectura de texto en voz alta en curso.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "command": "{nircmd} speak stop"
+    },
+    {
+      "name": "create_shortcut",
+      "description": "Crea un acceso directo (.lnk) hacia un programa o archivo.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Ruta del programa o archivo al que apuntará el acceso directo."
+          },
+          "folder": {
+            "type": "string",
+            "description": "Carpeta donde se creará el acceso directo, por ejemplo el escritorio."
+          },
+          "shortcut_name": {
+            "type": "string",
+            "description": "Nombre del acceso directo (sin extensión .lnk)."
+          }
+        },
+        "required": [
+          "target",
+          "folder",
+          "shortcut_name"
+        ]
+      },
+      "command": "{nircmd} shortcut \"{target}\" \"{folder}\" \"{shortcut_name}\""
+    },
+    {
+      "name": "set_window_transparency",
+      "description": "Cambia el nivel de transparencia de una ventana.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Título parcial de la ventana."
+          },
+          "opacity": {
+            "type": "integer",
+            "description": "Nivel de opacidad entre 0 y 255."
+          }
+        },
+        "required": [
+          "title",
+          "opacity"
+        ]
+      },
+      "command": "{nircmd} win trans ititle \"{title}\" {opacity}"
+    },
+    {
+      "name": "move_window",
+      "description": "Mueve una ventana a una posición específica.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "x": {
+            "type": "integer"
+          },
+          "y": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "title",
+          "x",
+          "y"
+        ]
+      },
+      "command": "{nircmd} win move ititle \"{title}\" {x} {y}"
+    },
+    {
+      "name": "resize_window",
+      "description": "Cambia el tamaño de una ventana.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "title",
+          "width",
+          "height"
+        ]
+      },
+      "command": "{nircmd} win size ititle \"{title}\" {width} {height}"
+    },
+    {
+      "name": "set_window_topmost",
+      "description": "Mantiene una ventana siempre visible.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "command": "{nircmd} win settopmost ititle \"{title}\" 1"
+    },
+    {
+      "name": "unset_window_topmost",
+      "description": "Quita el modo siempre visible de una ventana.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "command": "{nircmd} win settopmost ititle \"{title}\" 0"
+    },
+    {
+      "name": "set_window_title",
+      "description": "Modifica el título de una ventana.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "new_title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "new_title"
+        ]
+      },
+      "command": "{nircmd} win settext ititle \"{title}\" \"{new_title}\""
+    },
+    {
+      "name": "center_window",
+      "description": "Centra una ventana en la pantalla.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "command": "{nircmd} win center ititle \"{title}\""
+    },
+    {
+      "name": "flash_window",
+      "description": "Hace parpadear una ventana en la barra de tareas.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "command": "{nircmd} win flash ititle \"{title}\""
+    },
+    {
+      "name": "redraw_window",
+      "description": "Redibuja una ventana.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "command": "{nircmd} win redraw ititle \"{title}\""
+    },
+    {
+      "name": "toggle_taskbar",
+      "description": "Oculta o muestra la barra de tareas.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "hide",
+              "show"
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "command": "{nircmd} win {state} class Shell_TrayWnd"
+    },
+    {
+      "name": "restart_explorer",
+      "description": "Reinicia el Explorador de Windows.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "command": "{nircmd} killprocess explorer.exe && {nircmd} exec show explorer.exe"
+    },
+    {
+      "name": "open_folder",
+      "description": "Abre una carpeta en el Explorador.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} exec show explorer.exe \"{path}\""
+    },
+    {
+      "name": "select_file_in_explorer",
+      "description": "Abre el Explorador seleccionando un archivo.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} exec show explorer.exe /select,\"{path}\""
+    },
+    {
+      "name": "clear_clipboard",
+      "description": "Vacía completamente el portapapeles de Windows.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "command": "{nircmd} clipboard clear"
+    },
+    {
+      "name": "save_clipboard_to_file",
+      "description": "Guarda el contenido textual del portapapeles en un archivo.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Ruta del archivo de destino."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} clipboard saveclp \"{path}\""
+    },
+    {
+      "name": "load_clipboard_from_file",
+      "description": "Carga un archivo CLP al portapapeles.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} clipboard loadclp \"{path}\""
+    },
+    {
+      "name": "copy_file_to_clipboard",
+      "description": "Copia un archivo al portapapeles como si se hubiera usado Ctrl+C.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} clipboard copyfile \"{path}\""
+    },
+    {
+      "name": "copy_folder_to_clipboard",
+      "description": "Copia una carpeta al portapapeles.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} clipboard copyfolder \"{path}\""
+    },
+    {
+      "name": "save_clipboard_image",
+      "description": "Guarda la imagen del portapapeles como PNG.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} clipboard saveimage \"{path}\""
+    },
+    {
+      "name": "create_directory",
+      "description": "Crea una carpeta.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} md \"{path}\""
+    },
+    {
+      "name": "remove_directory",
+      "description": "Elimina una carpeta vacía.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} rd \"{path}\""
+    },
+    {
+      "name": "delete_file",
+      "description": "Elimina un archivo.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "command": "{nircmd} deletefile \"{path}\""
+    },
+    {
+      "name": "rename_file",
+      "description": "Renombra un archivo.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "old_path": {
+            "type": "string"
+          },
+          "new_path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "old_path",
+          "new_path"
+        ]
+      },
+      "command": "{nircmd} rename \"{old_path}\" \"{new_path}\""
+    },
+    {
+      "name": "copy_file",
+      "description": "Copia un archivo.",
+      "safe": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "destination"
+        ]
+      },
+      "command": "{nircmd} copyfile \"{source}\" \"{destination}\""
+    },
+    {
+      "name": "move_file",
+      "description": "Mueve un archivo.",
+      "safe": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "destination"
+        ]
+      },
+      "command": "{nircmd} movefile \"{source}\" \"{destination}\""
     }
   ]
 }

@@ -57,6 +57,8 @@ export type ChatMessage = {
   execResult?: ExecutionResult
   /** UI-only: true when the user rejected an unsafe command */
   denied?: boolean
+  /** UI-only: the tool definition created by the crear_tool_nircmd built-in */
+  toolCreated?: ToolDefinition
 }
 
 export type ExecutionResult = {

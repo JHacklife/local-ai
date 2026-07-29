@@ -1,7 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { Brain, ChevronDown, CircleCheck, CircleX, TerminalSquare, User, Wrench } from "lucide-react"
+import {
+  Brain,
+  ChevronDown,
+  CircleCheck,
+  CircleX,
+  Clock,
+  Globe,
+  Sparkles,
+  TerminalSquare,
+  User,
+  Wrench,
+} from "lucide-react"
+import { CREATE_TOOL_NAME, SEARCH_TOOL_NAME, WAIT_TOOL_NAME } from "@/lib/builtins"
 import type { ChatMessage } from "@/lib/types"
 
 function ThinkingBlock({ text }: { text: string }) {
@@ -35,6 +47,54 @@ export function MessageItem({ message }: { message: ChatMessage }) {
           <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
             <User className="size-4" />
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (message.role === "tool" && message.tool_name === WAIT_TOOL_NAME) {
+    return (
+      <div className="flex justify-start">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs text-muted-foreground">
+          <Clock className="size-3.5" />
+          {message.content}
+        </div>
+      </div>
+    )
+  }
+
+  if (message.role === "tool" && message.tool_name === SEARCH_TOOL_NAME) {
+    return (
+      <div className="flex justify-start">
+        <div className="w-full max-w-[92%] rounded-lg border border-border bg-card/60 p-3">
+          <div className="flex items-center gap-2">
+            <Globe className="size-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-foreground">Búsqueda en NirCmd</span>
+          </div>
+          <pre className="mt-2 whitespace-pre-wrap font-mono text-xs text-muted-foreground">{message.content}</pre>
+        </div>
+      </div>
+    )
+  }
+
+  if (message.role === "tool" && message.tool_name === CREATE_TOOL_NAME) {
+    return (
+      <div className="flex justify-start">
+        <div className="w-full max-w-[92%] rounded-lg border border-primary/40 bg-primary/5 p-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-primary" />
+            <span className="text-xs font-medium text-foreground">
+              {message.toolCreated ? `Nueva tool: ${message.toolCreated.name}` : "Nueva tool"}
+            </span>
+          </div>
+          {message.command && (
+            <pre className="mt-2 overflow-x-auto rounded bg-background/70 px-2.5 py-1.5 font-mono text-xs text-primary">
+              {message.command}
+            </pre>
+          )}
+          {message.content && (
+            <p className="mt-2 text-xs text-muted-foreground">{message.content}</p>
+          )}
         </div>
       </div>
     )
